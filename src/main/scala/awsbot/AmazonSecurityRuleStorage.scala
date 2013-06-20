@@ -3,6 +3,7 @@ package awsbot
 import java.io.FileInputStream
 import scala.collection.JavaConverters._
 import scala.collection.JavaConversions._
+import scala.collection.mutable.Map
 import com.amazonaws.auth.PropertiesCredentials
 import com.amazonaws.services.dynamodb.AmazonDynamoDBClient
 import com.amazonaws.services.dynamodb.model.AttributeValue
@@ -63,15 +64,39 @@ object AmazonSecurityRuleStorage {
     val request = new DeleteItemRequest(TABLE_NAME, new Key().withHashKeyElement(new AttributeValue(user)).withRangeKeyElement(new AttributeValue(address)))
     db.deleteItem(request)
   }
+
+  private def buildRequest(field: String, value: String): ScanRequest = {
+    val condition = new Condition().withComparisonOperator(ComparisonOperator.EQ.toString()).withAttributeValueList(new AttributeValue().withS(value))
+    new ScanRequest(TABLE_NAME).withScanFilter(Map(field -> condition).toMap.asJava)
+  }
   
-  def addressForUser(user: String): Seq[String] = {
-    val condition = new Condition().withComparisonOperator(ComparisonOperator.EQ.toString()).withAttributeValueList(new AttributeValue().withS(user))
-    val request = new ScanRequest(TABLE_NAME).withScanFilter(Map("user" -> condition).toMap.asJava)
+  private def query(field: String, value: String): List[java.util.Map[String, AttributeValue]] = {
+    val request = buildRequest(field, value)
     val result = db.scan(request)
     if (result.getCount() == 0) {
       List()
     } else {
-      result.getItems().toList.map(item => item("address").getS())
+      result.getItems().toList
     }
+  }
+
+  def addressForUser(user: String): Seq[String] = {
+    query("user", user).map(item => item("address").getS())
+  }
+  
+  def userForAddress(address: String): Seq[String] = {
+    query("address", address).map(item => item("user").getS())
+  }
+
+  def addresses(): Map[String, List[String]] = {
+    val request = new ScanRequest(TABLE_NAME)
+    val result = db.scan(request)
+    val map = Map[String, List[String]]()
+    result.getItems().toList.foreach({item =>
+      val existing = map.getOrElse(item("user").getS, List[String]())
+      val updated = item("address").getS :: existing
+      map += (item("user").getS -> updated)
+    })
+    map
   }
 }

@@ -10,6 +10,7 @@ object AWSBot extends App {
 
   Console.println("Initalizing AWS connection from configuration " + args(0))
   AmazonSecurityRuleStorage.initialize(args(0))
+  AmazonSecurityRules.initialize(args(0))
   Console.println("Starting AWSBot")
   HippyJava.runBot(new AWSBot(args(0)))
   Console.println("After AWSBot")

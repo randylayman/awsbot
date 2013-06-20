@@ -17,3 +17,5 @@ libraryDependencies += "com.amazonaws" % "aws-java-sdk" % "1.3.26"
 libraryDependencies += "HippyJava"     % "HippyJava"    % "1.0.0-SNAPSHOT"
 
 libraryDependencies += "com.novocode" % "junit-interface" % "0.10-M2" % "test"
+
+libraryDependencies += "commons-codec" % "commons-codec" % "1.5"

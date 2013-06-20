@@ -28,7 +28,11 @@ class AddSecurityRuleCommand(val address: String, val isAdditional: Boolean) ext
 
   override def matchStrength() = { MatchStrength.MATCH }
   override def execute(user: String, room: Room, bot: AWSBot) = {
-    val oldAddresses = AmazonSecurityRules.addAddressForUser(user, address)
+    val oldAddresses = AmazonSecurityRules.addAddressForUser(user, address, removeExisting())
     bot.sendMessage("Added " + address + " for " + user + " and removed " + oldAddresses.mkString(", "))
+  }
+  
+  private def removeExisting(): Boolean = {
+    !isAdditional
   }
 }
